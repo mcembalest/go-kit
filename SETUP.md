@@ -48,7 +48,22 @@ install Node/dependencies in CI. Commit the built assets needed by `go:embed` so
 against Git; do not automatically accept changed visual baselines. Keep Python
 example/tool environments separate and use uv where appropriate.
 
+For the default Go + TypeScript shape, keep the same public Make targets:
+
+- `run` and `build`: rebuild the UI before starting/building Go.
+- `check`: run TypeScript checks and UI tests, Go checks, then fail if rebuilding
+  changed the committed embedded assets or created untracked assets there.
+- CI: install the app's Node version and locked npm dependencies before checks.
+  The release job may build from verified committed assets without Node.
+
+Keep frontend paths, npm scripts, and browser test platforms in the app's own
+configuration. There is no mandatory frontend directory or additional shared
+command. For another language, follow the same rule: its native tools join the
+existing targets only where needed, and runtime dependencies are explicit.
+
 Optional updates are a separate adoption step described in [UPDATES.md](UPDATES.md).
+The current updater is a starting implementation with the limitations listed in
+the README; adoption must test the intended app experience before shipping it.
 
 ## Verify before sharing
 
