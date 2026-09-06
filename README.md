@@ -1,14 +1,8 @@
 # go-kit
 
-Personal templates for Go apps with optional TypeScript UI. Friends install each app directly; they don't need go-kit. Other languages stay app-owned; use uv for Python.
+[Template](templates/app) · [Setup](SETUP.md) · [Releasing](RELEASING.md) · [Updates](UPDATES.md)
 
-## Setup
-
-Copy the [app template](templates/app) into your app's repo. Follow [setup](SETUP.md).
-
-## Develop
-
-Run in the app repo:
+## Development
 
 | Command | Action |
 | --- | --- |
@@ -16,31 +10,40 @@ Run in the app repo:
 | `make run ARGS='...'` | Pass app arguments |
 | `make check` | Run checks |
 | `make build` or `make` | Build executable |
-| `make release-check` | Check and preview release archives locally |
+| `make release-check` | Local release preview; no publishing |
 
-Release: `git tag -a <version> -m '<version>'` → `git push origin HEAD` → `git push origin <version>`. Tag pushes trigger CI checks and publishing.
-
-## Install and use
-
-Replace `github.com/you/myapp` and `myapp` with your app. Put Go's install directory on PATH.
+## Release
 
 | Command | Action |
 | --- | --- |
-| `go install github.com/you/myapp@<tag-or-commit>` | Install a fixed build; use an older tag to roll back |
-| `go install github.com/you/myapp@main` | Install current development revision |
-| `go install github.com/you/myapp@latest` | Install latest eligible version once |
+| `git tag -a <version> -m '<version>'` | Tag version |
+| `git push origin HEAD` | Push commit |
+| `git push origin <version>` | Trigger CI checks and publishing |
+
+## Installation
+
+| Command | Action |
+| --- | --- |
+| `go install github.com/you/myapp@<tag-or-commit>` | Fixed version or rollback |
+| `go install github.com/you/myapp@main` | Current development revision |
+| `go install github.com/you/myapp@latest` | Latest eligible version; one-time install |
 | `myapp [arguments]` | Launch |
-| `myapp --version` or `myapp -v` | Identify build after adopting version snippet |
+| `myapp --version` or `myapp -v` | Build identity; version snippet required |
 
 ## Optional updates
 
-Requires adopting the [update template](UPDATES.md). Off by default.
-
 | Setting | Action |
 | --- | --- |
-| `export MYAPP_AUTO_UPDATE=1` | Check for newer release tags on launch |
-| `export MYAPP_AUTO_UPDATE=0` | Keep installed version fixed |
+| Unset / `export MYAPP_AUTO_UPDATE=0` | Fixed installation; default |
+| `export MYAPP_AUTO_UPDATE=1` | Check newer release tags on launch |
 
-Requires Go; updates apply next launch. Current template may delay startup up to about a minute and follows tags before release CI completes. Development, prerelease, and archive builds are excluded. Disable updates before pinning or rolling back; change shell startup settings to persist the choice.
-
-[Setup](SETUP.md) · [Releasing](RELEASING.md) · [Update details](UPDATES.md)
+| Behavior | Current template |
+| --- | --- |
+| Requirements | Update snippet; Go; macOS/Linux |
+| Eligible builds | Non-prerelease tagged Go installations |
+| Activation | Next launch |
+| Failure | Existing executable retained |
+| Startup delay | Up to about one minute |
+| Release gate | Go tags; independent of release CI |
+| Persistence | Shell startup setting |
+| Pin / rollback | Disable updates, reinstall exact version |
