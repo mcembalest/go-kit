@@ -107,6 +107,18 @@ for macOS/Linux amd64/arm64 by default; compilation does not prove runtime suppo
 App-owned assets/licenses and external runtimes must be documented before release.
 No Apple signing/notarization or hosted deployment is configured.
 
+## Optional Python worker
+
+`init --python` adds app-owned `gokit_python.go`, its test, and a `python/` uv project
+(`pyproject.toml`, `worker.py`, `uv.lock`, locked during init). Go embeds the project, writes
+it once to the user cache folder under a content hash, and runs `uv run --locked` there, so
+installs need Go and uv but no manual Python setup; uv provisions Python and packages on first
+use. `gokitPython()` starts the process; `Call(req, resp)` sends one JSON line and reads one
+back; stderr passes through for progress; a response with an `error` field fails the call.
+The project watches `python/` in dev and checks `uv lock --check --project python` before
+shipping; CI installs uv. Relock after dependency edits with `uv lock --project python`.
+Packages with native wheels must exist for each released OS/architecture.
+
 ## Optional updates
 
 `init --updates` includes app-owned Go update code and tests. Its environment name

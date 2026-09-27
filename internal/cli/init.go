@@ -25,6 +25,7 @@ func initProject(ctx context.Context, args []string) error {
 	module := fs.String("module", "", "GitHub module path; inferred from existing go.mod")
 	web := fs.Bool("web", false, "include a TypeScript browser starter (new projects)")
 	updates := fs.Bool("updates", false, "include opt-in app updates; off until enabled by its user")
+	python := fs.Bool("python", false, "include an embedded Python worker run with uv")
 	yes := fs.Bool("yes", false, "apply the printed plan without prompting")
 	if err := fs.Parse(args); err != nil {
 		return err
@@ -97,10 +98,22 @@ func main() { gokitStartup(); fmt.Println("` + name + ` is ready.") }
 		}
 		files["main.go"] = []byte(main)
 	}
+	if *python {
+		c.Watch = append(c.Watch, "python")
+		c.Checks = append(c.Checks, []string{"uv", "lock", "--check", "--project", "python"})
+		for dst, src := range map[string]string{"gokit_python.go": "python.go", "gokit_python_test.go": "python_test.go", "python/worker.py": "python_worker.py"} {
+			data, err := assets.ReadFile("assets/" + src + ".txt")
+			if err != nil {
+				return err
+			}
+			files[dst] = []byte(strings.ReplaceAll(string(data), "APPNAME", name))
+		}
+		files["python/pyproject.toml"] = []byte(pythonProject(name))
+	}
 	for path, data := range map[string]string{
 		"gokit_build.go":              strings.ReplaceAll(buildSource(name, *updates), "github.com/OWNER/REPO", *module),
 		".goreleaser.yaml":            releaseConfig(name),
-		".github/workflows/gokit.yml": testWorkflow(c),
+		".github/workflows/gokit.yml": testWorkflow(c, *python),
 	} {
 		files[path] = []byte(data)
 	}
@@ -129,11 +142,19 @@ func main() { gokitStartup(); fmt.Println("` + name + ` is ready.") }
 		files["README.md"] = []byte("# " + name + "\n\n```sh\ngo install " + *module + "@main\n" + name + "\n```\n\nDevelopment: `go-kit dev` · Release: `go-kit ship <version>`\n\n`" + name + " --version` identifies the installed build.\n")
 	}
 	if !exists(filepath.Join(dir, "DEPENDENCIES.md")) {
-		files["DEPENDENCIES.md"] = []byte("# Dependencies\n\nInstall: Go 1.22+.\nDevelopment: Go" + map[bool]string{true: " and Node 24/npm", false: ""}[c.Web != ""] + ".\n\nReview before shipping: document external runtime programs, authentication,\nbundled assets/licenses, and separate example environments here.\n")
+		runtime := ""
+		if *python {
+			runtime = "Run: uv (the embedded Python worker installs its own Python and packages on first use).\n"
+		}
+		files["DEPENDENCIES.md"] = []byte("# Dependencies\n\nInstall: Go 1.22+.\n" + runtime + "Development: Go" + map[bool]string{true: " and Node 24/npm", false: ""}[c.Web != ""] + map[bool]string{true: " and uv", false: ""}[*python] + ".\n\nReview before shipping: document external runtime programs, authentication,\nbundled assets/licenses, and separate example environments here.\n")
 	}
 	ignore, _ := os.ReadFile(filepath.Join(dir, ".gitignore"))
 	text := string(ignore)
-	for _, line := range []string{"/dist/", "/bin/", "node_modules/"} {
+	ignores := []string{"/dist/", "/bin/", "node_modules/"}
+	if *python {
+		ignores = append(ignores, ".venv/")
+	}
+	for _, line := range ignores {
 		if !strings.Contains("\n"+text+"\n", "\n"+line+"\n") {
 			text = strings.TrimRight(text, "\n") + "\n" + line + "\n"
 		}
@@ -161,6 +182,10 @@ func main() { gokitStartup(); fmt.Println("` + name + ` is ready.") }
 	}
 	if *web {
 		fmt.Println("  build   TypeScript starter (npm; requires network on first use)")
+	}
+	if *python {
+		fmt.Println("  lock    Python worker (uv)")
+		paths = append(paths, "python/uv.lock")
 	}
 	if newGit {
 		fmt.Println("  create  Git repository and origin (no commit or push)")
@@ -197,6 +222,22 @@ func main() { gokitStartup(); fmt.Println("` + name + ` is ready.") }
 			}
 			files[p] = data
 			paths = append(paths, p)
+		}
+	}
+	if *python {
+		stage, err := os.MkdirTemp("", "go-kit-python-")
+		if err != nil {
+			return err
+		}
+		defer os.RemoveAll(stage)
+		if err := os.WriteFile(filepath.Join(stage, "pyproject.toml"), files["python/pyproject.toml"], 0644); err != nil {
+			return err
+		}
+		if err := run(ctx, stage, "uv", "lock", "--quiet"); err != nil {
+			return err
+		}
+		if files["python/uv.lock"], err = os.ReadFile(filepath.Join(stage, "uv.lock")); err != nil {
+			return err
 		}
 	}
 	// Validate every destination again before applying, including generated UI files.

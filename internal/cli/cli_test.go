@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -178,5 +179,33 @@ func TestFingerprint(t *testing.T) {
 	after, _ = fingerprint(dir, Config{}, nil)
 	if before == after {
 		t.Fatal("source changes not watched")
+	}
+}
+func TestPython(t *testing.T) {
+	if _, err := exec.LookPath("uv"); err != nil {
+		t.Skip("uv not installed")
+	}
+	dir := t.TempDir()
+	if err := initProject(context.Background(), []string{"--module", "github.com/example/pyapp", "--python", "--yes", dir}); err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range []string{"gokit_python.go", "python/worker.py", "python/pyproject.toml", "python/uv.lock"} {
+		if !exists(filepath.Join(dir, p)) {
+			t.Fatalf("missing %s", p)
+		}
+	}
+	c, err := load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(c.Watch) != 1 || c.Watch[0] != "python" || len(c.Checks) != 1 || c.Checks[0][0] != "uv" {
+		t.Fatalf("unexpected config %+v", c)
+	}
+	// the generated test starts the worker through uv and round-trips a call
+	if err := run(context.Background(), dir, "go", "test", "-run", "TestGokitPython", "-v", "./..."); err != nil {
+		t.Fatal(err)
+	}
+	if err := run(context.Background(), dir, c.Checks[0]...); err != nil {
+		t.Fatal(err)
 	}
 }

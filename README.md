@@ -14,6 +14,7 @@ go install github.com/mcembalest/go-kit@main
 | `go-kit init [dir]` | Preview and adopt a root Go executable |
 | `go-kit init --web --module github.com/you/app [dir]` | Create Go + TypeScript browser app |
 | `go-kit init --updates ...` | Include optional app-update support; off by default |
+| `go-kit init --python ...` | Include an embedded Python worker run with uv |
 | `go-kit init --yes ...` | Apply without prompting |
 | `go-kit dev [-- arguments]` | Build/run; explicit arguments replace saved arguments |
 | `go-kit ship <version> --dry-run` | Test and package snapshots; no tag/push/publication |
@@ -56,6 +57,7 @@ go install github.com/mcembalest/go-kit@main
 | Terminal development | Manual mode; native input, resizing, signals, and app exit status |
 | Watched inputs | Go/module/config, embedded assets, UI sources, and explicit watch paths |
 | UI development | Node 24/npm; committed browser bundle; manual browser refresh |
+| Python worker | uv at runtime; `python/` embedded; JSON lines over stdin/stdout; locked with `uv.lock` |
 | Initialization | Local Git/origin if absent; no GitHub repo, commit, or push |
 | Shipping | Clean Git root; GoReleaser OSS 2.18.0; GitHub CLI/auth for publication |
 | Publication | Explicit `ship`; tag pushes alone do not publish |

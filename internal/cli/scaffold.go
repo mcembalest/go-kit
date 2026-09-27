@@ -46,10 +46,15 @@ changelog:
   sort: asc
 `
 }
-func testWorkflow(c Config) string {
+func testWorkflow(c Config, python bool) string {
 	web := ""
+	if python {
+		web = `      - uses: astral-sh/setup-uv@v6
+      - run: uv lock --check --project python
+`
+	}
 	if c.Web != "" {
-		web = `      - uses: actions/setup-node@v4
+		web += `      - uses: actions/setup-node@v4
         with:
           node-version: '24'
       - run: npm --prefix ` + c.Web + ` ci
@@ -104,3 +109,15 @@ func main(){
  log.Fatal(http.ListenAndServe(address,http.FileServer(http.FS(root))))
 }
 `
+
+func pythonProject(name string) string {
+	return `[project]
+name = "` + name + `-python"
+version = "0"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.uv]
+package = false
+`
+}

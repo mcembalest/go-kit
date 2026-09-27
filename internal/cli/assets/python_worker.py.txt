@@ -1,0 +1,19 @@
+"""Python worker for the Go app. One JSON request per stdin line, one JSON response per stdout line.
+Write logs and progress to stderr. Respond {"error": "..."} to fail a call."""
+
+import json
+import sys
+
+
+def handle(req):
+    if "fail" in req:
+        raise ValueError(req["fail"])
+    return {"echo": req}
+
+
+for line in sys.stdin:
+    try:
+        resp = handle(json.loads(line))
+    except Exception as e:
+        resp = {"error": str(e)}
+    print(json.dumps(resp), flush=True)

@@ -37,7 +37,7 @@ type DevConfig struct {
 
 func Run(ctx context.Context, args []string) error {
 	if len(args) == 0 || args[0] == "--help" || args[0] == "-h" {
-		fmt.Println("go-kit — init · dev · ship\n\n  init --module github.com/you/app [--web] [--updates] [--yes] [dir]\n  dev [-- app arguments]\n  ship <version> [--dry-run] [--yes]\n\nRun a command with --help for details.")
+		fmt.Println("go-kit — init · dev · ship\n\n  init --module github.com/you/app [--web] [--updates] [--python] [--yes] [dir]\n  dev [-- app arguments]\n  ship <version> [--dry-run] [--yes]\n\nRun a command with --help for details.")
 		return nil
 	}
 	if args[0] == "--version" || args[0] == "-v" {
