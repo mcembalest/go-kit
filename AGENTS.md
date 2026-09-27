@@ -1,13 +1,9 @@
 # Scope
 
-- go-kit is a personal Go CLI: init, dev, ship. Apps remain independently installable.
-- Keep workflows small and use established tools underneath. No plugin platform,
-  shared app runtime dependency, or custom package manager.
-- Product behavior belongs in product repositories. Propose concrete integration
-  changes before modifying them. Preserve existing code during adoption.
-- Updates are opt-in; exact-version installs and rollback remain supported.
-- Default to Go delivery/backend and optional TypeScript browser UI. Use uv for
-  optional Python tooling; other languages remain app-owned.
-- README is a concise table-based command/settings inventory. Keep implementation
-  details in DEVELOPMENT.md. Document every public flag and publishing trigger.
-- Test with disposable projects. Do not push or publish without authorization.
+- go-kit builds, runs, and ships Go apps: `dev` and `ship`, plus the small `kit` package apps import.
+- Apps carry no go-kit files. Read what's needed from the repo: go.mod, web/package.json, python/pyproject.toml.
+- Nothing is generated into app repos. Release artifacts are built in a temp folder.
+- Two installs per app: `go install …@main` (dev builds, needs Go) and GitHub release archives + install.sh (no Go).
+- Apps must run for people without dev tools: kit.Python downloads a pinned, checksummed uv when missing.
+- Usage lives in `go-kit -h`. README is install plus `-h`.
+- Test with disposable projects. Do not push, tag, or publish without authorization.
