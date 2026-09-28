@@ -6,4 +6,5 @@
 - Two installs per app: `go install …@main` (dev builds, needs Go) and GitHub release archives + install.sh (no Go).
 - Apps must run for people without dev tools: kit.Python downloads a pinned, checksummed uv when missing.
 - Usage lives in `go-kit -h`. README is install plus `-h`.
+- Keep repo roots minimal: a thin main.go (embeds + one call), go.mod/go.sum, README.md; code in internal/, plus web/ and python/ when used.
 - Test with disposable projects. Do not push, tag, or publish without authorization.

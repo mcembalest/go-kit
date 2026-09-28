@@ -1,4 +1,4 @@
-package main
+package cli
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 func fixture(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
-	here, _ := os.Getwd()
+	here := moduleRoot(t)
 	files := map[string]string{
 		"go.mod": "module github.com/example/demo\n\ngo 1.22\n\nrequire github.com/mcembalest/go-kit v0.0.0\n\nreplace github.com/mcembalest/go-kit => " + here + "\n",
 		"main.go": `package main
@@ -101,11 +101,24 @@ func TestShipRefusesDirtyTree(t *testing.T) {
 
 func TestDev(t *testing.T) {
 	gokit := filepath.Join(t.TempDir(), "go-kit")
-	if out, err := output(context.Background(), ".", "go", "build", "-o", gokit, "."); err != nil {
+	if out, err := output(context.Background(), moduleRoot(t), "go", "build", "-o", gokit, "."); err != nil {
 		t.Fatalf("%v: %s", err, out)
 	}
 	out, err := output(context.Background(), fixture(t), gokit, "dev", "--", "a", "b")
 	if err != nil || !strings.Contains(out, "demo ") || !strings.HasSuffix(out, " [a b]") {
 		t.Fatalf("%q %v", out, err)
 	}
+}
+
+// moduleRoot is the go-kit repo root (tests run in internal/cli).
+func moduleRoot(t *testing.T) string {
+	t.Helper()
+	dir, _ := os.Getwd()
+	for !exists(filepath.Join(dir, "go.mod")) {
+		if dir == filepath.Dir(dir) {
+			t.Fatal("go.mod not found")
+		}
+		dir = filepath.Dir(dir)
+	}
+	return dir
 }
